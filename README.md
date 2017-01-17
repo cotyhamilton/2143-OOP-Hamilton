@@ -4,4 +4,4 @@
 
 # Coty Hamilton
 
-cotyhamilton@gmail.com | cotyhamilton.github.io
+cotyhamilton@gmail.com | [cotyhamilton.github.io](cotyhamilton.github.io)
