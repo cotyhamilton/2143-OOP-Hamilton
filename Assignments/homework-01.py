@@ -2,7 +2,7 @@
 Name: Coty Hamilton
 Email: cotyhamilton@gmail.com
 Assignment: Homework 1 - Lists and Dictionaries
-Due: 19 Sep @ 1:00 p.m.
+Due: 31 Jan @ 11:00 p.m.
 """
 
 
@@ -105,6 +105,7 @@ def reverse(lst):
     return lst
 
 print (reverse(x))
+# Prints: [1, 5, 4, 2, 3]
 
 
 # ---
@@ -122,6 +123,7 @@ def rotate(lst, k):
     return rList
 
 print (rotate(x, 3))
+# Prints: [3, 4, 5, 1, 2]
 
 
 # ---
@@ -159,7 +161,7 @@ print(superbowls)
 # superbowls[['steelers', '49ers']] = 11
 # can't use list as key in dict
 # print(superbowls)
-#Prints: {['steelers', '49ers']: 11, 3: 'cat', ('eli manning', 'giants'): 5, 'peyton manning': 1, 'tom brady': 3, 'joe flacco': 1, 'joe montana': 4}
+# Prints: {['steelers', '49ers']: 11, 3: 'cat', ('eli manning', 'giants'): 5, 'peyton manning': 1, 'tom brady': 3, 'joe flacco': 1, 'joe montana': 4} (wrong)
     # Correct Answer: error
 
 
@@ -175,11 +177,10 @@ def replace_all(d, x, y):
     for k,v in d.items():
         for j,w in v.items():
             if w == x:
-                j = y
+                d[k][j] = y
     return d
-# This doesn't work
 print(replace_all(d, 3, 1))
-
+# Prints: {1: {2: 1, 3: 4} 2: {4: 4, 5: 1}}
 
 # ---
 #   J: Given a (non-nested) dictionary delete all occurences of a value. You cannot delete items in a dictionary as you are iterating through it (google :) ).
@@ -198,3 +199,4 @@ def rm(d, x):
     return d
 
 print (rm(d,2))
+# Prints: {2: 3, 4: 3}
