@@ -38,6 +38,7 @@ print(a)
 x = [3, 1, 2, 1, 5, 1, 1, 7]
 
 def remove_all(el, lst):
+    # remove() removes the first occurence in a list
     while (el in lst):
         lst.remove(el)
     return lst
@@ -84,10 +85,12 @@ print(a[:])
 print(a[4:2])
 # Prints: [5, 3, 3, 1] (Wrong)
     # Correct Answer: []
+    # Doesn't do the wrap around, lol
 
 print(a[1:-2])
 # Prints: [1, 3, 3, 5, 2] (Wrong)
     # Correct Answer: [1, 4, 2]
+    # finds -2 index, moves forward as normal
 
 print(a[::-1])
 # Prints: [3, 5, 2, 4, 1, 3]
@@ -159,7 +162,7 @@ print(superbowls)
 #Prints: {3: 'cat', ('eli manning', 'giants'): 5, 'peyton manning': 1, 'tom brady': 3, 'joe flacco': 1, 'joe montana': 4}
 
 # superbowls[['steelers', '49ers']] = 11
-# can't use list as key in dict
+# can't use list (or any mutable objects) as key in dict
 # print(superbowls)
 # Prints: {['steelers', '49ers']: 11, 3: 'cat', ('eli manning', 'giants'): 5, 'peyton manning': 1, 'tom brady': 3, 'joe flacco': 1, 'joe montana': 4} (wrong)
     # Correct Answer: error
@@ -191,6 +194,7 @@ d = {1:2, 2:3, 3:2, 4:3}
 
 def rm(d, x):
     rmKey = []
+    # list to populate with keys that need to be removed from d
     for k,v in d.items():
         if v == x:
             rmKey.append(k)
