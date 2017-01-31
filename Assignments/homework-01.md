@@ -1,6 +1,6 @@
 Name: Coty Hamilton
 
-Email: cotyhamilton@gmail.com**
+Email: cotyhamilton@gmail.com
 
 Assignment: Homework 1 - Lists and Dictionaries
 
