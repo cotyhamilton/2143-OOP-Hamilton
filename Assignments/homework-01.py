@@ -104,7 +104,8 @@ print(a[::-1])
 x = [3, 2, 4, 5, 1]
 
 def reverse(lst):
-    lst = lst[::-1]
+    for i in range(0, len(lst)-1):
+         lst.insert(len(lst)-1-i,lst.pop(0))
     return lst
 
 print (reverse(x))
@@ -178,10 +179,13 @@ d = {1: {2:3, 3:4},
 
 def replace_all(d, x, y):
     for k,v in d.items():
-        for j,w in v.items():
-            if w == x:
-                d[k][j] = y
+        if type(v) is dict:
+            replace_all(v,x,y)
+        else:
+            if v == x:
+                d[k] = y
     return d
+
 print(replace_all(d, 3, 1))
 # Prints: {1: {2: 1, 3: 4} 2: {4: 4, 5: 1}}
 
