@@ -94,6 +94,10 @@ class Card(object):
         brank = symbol+self.rank
         return self.str_values[self.rank].format(trank=trank, suit=symbol,brank=brank)
 
+# reset string method after changing to HIDDEN_CARD during war
+    def stringy(self):
+        self.ascii = self.__str__()
+
 # overload comparison operators for card objects
 
     def __lt__(self,other):
@@ -202,7 +206,7 @@ class Game(object):
         self.pot = Hand()
         self.__deal()
         self.__gameloop()
-    
+
     def __deal(self):
         for i in range(26):
             self.computer.hand.add(self.D.pop_card())
@@ -239,31 +243,43 @@ class Game(object):
             c.war.add(c.hand._list[0])
             self.pot.add(c.hand.pop_card())
         if(len(c.hand._list) > 1):
-            c.war.add(c.hand._list[0])
+            self.temp = c.hand._list[0]
+        
+        # set cards string method to print hidden
+
+            self.temp.ascii = HIDDEN_CARD
+            c.war.add(self.temp)
             self.pot.add(c.hand.pop_card())
 
         if(len(p.hand._list) > 1):
             p.war.add(p.hand._list[0])
             self.pot.add(p.hand.pop_card())
         if(len(p.hand._list) > 1):
-            p.war.add(p.hand._list[0])
+            self.temp = p.hand._list[0]
+
+        # set cards string method to print hidden
+
+            self.temp.ascii = HIDDEN_CARD
+            p.war.add(self.temp)
             self.pot.add(p.hand.pop_card())
 
         print(c.name + "'s hand:\n")
         print(c.war)
         print()
-        print(p.name + "'s hand:")
         print(p.war)
+        print()
+        print(p.name + "'s hand:")
         print()
 
         self.warCount = self.warCount + 1
+
+        # time.sleep(.5)
 
 
     def __gameloop(self):
         while(len(self.computer.hand._list) and len(self.player.hand._list)):
             os.system('clear')
-            print(" ██████╗  █████╗ ███╗   ███╗███████╗\n██╔════╝ ██╔══██╗████╗ ████║██╔════╝\n██║  ███╗███████║██╔████╔██║█████╗\n██║   ██║██╔══██║██║╚██╔╝██║██╔══╝ \n╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗\n ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝")
-            print()
+            print(" ██████╗  █████╗ ███╗   ███╗███████╗\n██╔════╝ ██╔══██╗████╗ ████║██╔════╝\n██║  ███╗███████║██╔████╔██║█████╗\n██║   ██║██╔══██║██║╚██╔╝██║██╔══╝ \n╚██████╔╝██║  ██║██║ ╚═╝ ██║███████╗\n ╚═════╝ ╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝\n")
             print(self.computer.name)
             print()
             print(self.computer.hand._list[0])
@@ -275,7 +291,6 @@ class Game(object):
             self.winner = self.__compare(self.player.hand._list[0], self.computer.hand._list[0])
             
             if (self.winner == "tie"):
-                print("██╗    ██╗ █████╗ ██████╗\n██║    ██║██╔══██╗██╔══██╗\n██║ █╗ ██║███████║██████╔╝\n██║███╗██║██╔══██║██╔══██╗\n╚███╔███╔╝██║  ██║██║  ██║\n ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝\n")
                 self.__tie(self.player, self.computer)
             else:
                 self.pot.add(self.player.hand.pop_card())
@@ -283,13 +298,20 @@ class Game(object):
                 self.__emptyPot(self.winner)
                 print(self.winner.name + " wins")
 
+            # reset cards ascii from HIDDEN_CARD
+
+                for card in self.player.hand._list:
+                    card.stringy()
+                for card in self.computer.hand._list:
+                    card.stringy()
+
             self.count = self.count + 1
 
             if (self.count % 26 == 0):
                 self.player.hand.shuffle()
                 self.computer.hand.shuffle()
             
-            # time.sleep(.75)
+            # time.sleep(.5)
 
             
 class Player(object):
