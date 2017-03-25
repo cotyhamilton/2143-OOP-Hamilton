@@ -1,4 +1,5 @@
 from graphics import *
+import json
 
 class Grid(object):
     def __init__(self, gridSize):
@@ -15,12 +16,14 @@ class Grid(object):
         self.bkgrnd = Rectangle(Point(0, 0), Point(self.width, self.height))
         self.bkgrnd.setFill(color_rgb(255,255,255))
         self.nrows = self.rows
-        self.color_wheel = [  color_rgb(255,0,0), color_rgb(0,255,0), color_rgb(0,0,255),
-                        color_rgb(255,255,0), color_rgb(255,0,255), color_rgb(0,255,255),
-                        color_rgb(127,255,0), color_rgb(0,127,255), color_rgb(127,0,255),
-                        color_rgb(255,127,0), color_rgb(0,255,127), color_rgb(255,0,127),
-                        color_rgb(127,127,0), color_rgb(127,0,127), color_rgb(0,127,127),
-                        color_rgb(255,255,127), color_rgb(255,127,255), color_rgb(127,255,255) ]
+        self.color_wheel = []
+        self.__make_color_wheel()
+        # self.color_wheel = [  color_rgb(255,0,0), color_rgb(0,255,0), color_rgb(0,0,255),
+        #                 color_rgb(255,255,0), color_rgb(255,0,255), color_rgb(0,255,255),
+        #                 color_rgb(127,255,0), color_rgb(0,127,255), color_rgb(127,0,255),
+        #                 color_rgb(255,127,0), color_rgb(0,255,127), color_rgb(255,0,127),
+        #                 color_rgb(127,127,0), color_rgb(127,0,127), color_rgb(0,127,127),
+        #                 color_rgb(255,255,127), color_rgb(255,127,255), color_rgb(127,255,255) ]
 
         self.cur_color = 0
 
@@ -32,9 +35,12 @@ class Grid(object):
                 self.cur_color = self.__get_next_color()
 
     def __make_color_wheel(self):
-        self.color_wheel = []
+        with open("colors.json") as file:
+            colors = file.read()
+        colors = json.loads(colors)
 
-        
+        for color in colors:
+            self.color_wheel.append(color_rgb(color["rgb"][0],color["rgb"][1],color["rgb"][2]))
 
     def __get_cur_color(self):
         """Return the currently chosen color in the color wheel.  
