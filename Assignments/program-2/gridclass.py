@@ -1,12 +1,19 @@
 from graphics import *
 import json
+import random
 
 class Grid(object):
+    """
+    a value is passed in to the constructor and continues if the value is a perfect square
+    a window is created and white background is drawn to the screen
+    a list which holds color values is created
+    calls the draw grid method
+    """
     def __init__(self, gridSize):
         if not self.__isSquare(gridSize):
             print "%d not so much" % gridSize
             exit()
-        square = (int(round(gridSize ** .5)))
+        self.square = (int(round(gridSize ** .5)))
         self.cols = gridSize
         self.rows = gridSize
         self.height = 500
@@ -15,73 +22,58 @@ class Grid(object):
         self.win.setCoords(0, 0, self.rows, self.cols)
         self.bkgrnd = Rectangle(Point(0, 0), Point(self.width, self.height))
         self.bkgrnd.setFill(color_rgb(255,255,255))
-        self.nrows = self.rows
+        self.nrows = gridSize
         self.color_wheel = []
+        self.cur_color = None
+
         self.__make_color_wheel()
-        # self.color_wheel = [  color_rgb(255,0,0), color_rgb(0,255,0), color_rgb(0,0,255),
-        #                 color_rgb(255,255,0), color_rgb(255,0,255), color_rgb(0,255,255),
-        #                 color_rgb(127,255,0), color_rgb(0,127,255), color_rgb(127,0,255),
-        #                 color_rgb(255,127,0), color_rgb(0,255,127), color_rgb(255,0,127),
-        #                 color_rgb(127,127,0), color_rgb(127,0,127), color_rgb(0,127,127),
-        #                 color_rgb(255,255,127), color_rgb(255,127,255), color_rgb(127,255,255) ]
+        self.cur_color = self.__get_next_color()
 
-        self.cur_color = 0
-
-        for row in range(square):
-            for col in range(square):
-                for sub_row in range(row * square, row * square + square):
-                    for sub_col in range(col * square, col * square + square):
-                        self.__fill_cell(sub_row, sub_col, self.__get_cur_color())
-                self.cur_color = self.__get_next_color()
+        self.__draw_grid()
 
     def __make_color_wheel(self):
+        """
+        opens colors.json and appends the hexadecimal color values to self.color_wheel
+        """
         with open("colors.json") as file:
             colors = file.read()
         colors = json.loads(colors)
 
         for color in colors:
-            self.color_wheel.append(color_rgb(color["rgb"][0],color["rgb"][1],color["rgb"][2]))
+            self.color_wheel.append(color["html"])
 
     def __get_cur_color(self):
-        """Return the currently chosen color in the color wheel.  
-
-        The color wheel is a list of colors selected to be contrast with each other. 
-        The first few entries are bright primary colors; as we cycle through the color
-        wheel, contrast becomes less, but colors should remain distinct to those with 
-        normal color vision until the color wheel cycles all the way around in 18 
-        choices and starts recycling previously used colors.   The color wheel starts
-        out in position 0, so get_cur_color() may be called before get_next_color() has 
-        been called. 
-        
-        Args:  none
-        Returns:  
-            a 'color' that can be passed to fill_cell
-            
-        FIXME: The color wheel should produce colors of contrasting brightness
-        as well as hue, to maximize distinctness for dichromats (people with 
-        "color blindness".  Maybe generating a good color wheel can be part of a 
-        project later in CIS 210.   (This is not a required or expected change 
-        for the week 4 project.) 
+        """
+        returns a color using the int self.cur_color as in index in self.color_wheel
         """
         return self.color_wheel[self.cur_color]
 
     def __get_next_color(self):
-        """Advance the color wheel, returning the next available color. 
-
-        The color wheel is a list of colors selected to be contrast with each other. 
-        The first few entries are bright primary colors; as we cycle through the color
-        wheel, contrast becomes less, but colors should remain distinct to those with 
-        normal color vision until the color wheel cycles all the way around in 18 
-        choices and starts recycling previously used colors. 
-        
-        Args:  none
-        Returns:  
-            a 'color' that can be passed to fill_cell    
         """
-        self.cur_color += 1
-        if self.cur_color >= len(self.color_wheel) :
-            self.cur_color = 0
+        if self.cur_color has a value, pop it from the list self.color_wheel
+        if self.color_wheel has no values, populate the list again
+        assign self.cur_color to a random integer which will be used as the index
+        in self.color_wheel
+        """
+        if self.cur_color:
+            self.color_wheel.pop(self.cur_color)
+        if not len(self.color_wheel):
+            self.__make_color_wheel()
+        self.cur_color = random.randint(0,len(self.color_wheel) - 1)
         return self.cur_color
+
+    def __draw_grid(self):
+        """
+        the grid is populated with large cells and subgrids in each cell
+        that have the same number of columns and rows (3 x 3 grid has a smaller 3 x 3 grid in each cell)
+        each cell in the large grid has a different color chosen randomly from the color wheel list
+        """
+        for row in range(self.square):
+            for col in range(self.square):
+                for sub_row in range(row * self.square, row * self.square + self.square):
+                    for sub_col in range(col * self.square, col * self.square + self.square):
+                        self.__fill_cell(sub_row, sub_col, self.__get_cur_color())
+                self.cur_color = self.__get_next_color()
 
     def __fill_cell(self, row, col, color):
         """Fill cell[row,col] with color.
@@ -94,10 +86,6 @@ class Grid(object):
             the leftmost row, column 1 is the next row to the right, etc. 
             Col should be between 0 and one less than the number of columns
             in the grid. 
-            color: What color to fill fill the selecte cell with.  Valid colors
-            include grid.white, grid.black, and values returned by 
-            grid.get_next_color() and grid.get_cur_color()
-
         """
         left = col
         right = col + 1
@@ -108,21 +96,28 @@ class Grid(object):
         mark.draw(self.win)
 
     def close(self):
-        """ Close the graphics window (shut down graphics). 
-        
-        Args: none
-        Returns: nothing
-        Effect:  the grid graphics window is closed. 
+        """
+        close the graphics window (shut down graphics). 
+        and exit the program
         """
         self.win.close()
         exit()
 
     def __isSquare(self, num):
+        """
+        determines if a number is a perfect square
+        (I haven't found the threshold, but does not work for very large numbers)
+
+        rounds the square root of a number to the nearest whole number
+        casts the result to type int
+        squares that result and compares it to the original number
+        returns num instead of true, for case when user enters 0
+        """
         if int(round(num ** .5)) ** 2 == num:
-            return True
+            return num
         else:
             return False
 
-square = Grid(25)
-input("Press enter to exit")
+square = Grid(49)
+raw_input("Press enter to continue")
 square.close()
