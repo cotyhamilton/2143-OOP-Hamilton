@@ -1,218 +1,188 @@
 """
-Grid display.  
+Program:
+--------
+    program 2 - gridception
 
-Displays a rectangular grid of cells, organized in rows and columns
-with row 0 at the top and growing down, column 0 at the left and 
-growing to the right.  A sequence of unique colors for cells can 
-be chosen from a color wheel, in addition to colors 'black' and 'white'
-which do not appear in the color wheel. 
-
-Michal Young (michal@cs.uoregon.edu), October 2012, 
-for CIS 210 at University of Oregon.  Revised November 2013
-for Sudoku with subgrids. 
-
-Uses the simple graphics module provided by Zelle, which in turn 
-is built on the Tk graphics package (and which should therefore be 
-available on all major Python platforms, including Linux, Mac, and 
-all flavors of Windows at least back to XP). 
+Description:
+------------
+    this program either accepts a command line argument or asks user to enter a number
+    which is used to define the dimensions of a square. If the number is a perfect square
+    a grid will be created and drawn to the screen with two sides that are equal to the
+    square root of that number
+    in each cell will be another grid with the same dimensions. Each larger cell will have
+    a different color
+    
+Name: Coty Hamilton
+Date: 28 Mar 2016
 """
 
-from graphics import *    # Zelle's simple OO graphics
+from graphics import *
+import json
+import random
+import sys
 
-global win  # The window we are drawing the grid in
-global cell_width, cell_height  # The size of a cell in the grid
+class Grid(object):
+    """ this class defines a grid and draws it to the screen
 
-global color_wheel
-color_wheel = [  color_rgb(255,0,0), color_rgb(0,255,0), color_rgb(0,0,255),
-                        color_rgb(255,255,0), color_rgb(255,0,255), color_rgb(0,255,255),
-                        color_rgb(127,255,0), color_rgb(0,127,255), color_rgb(127,0,255),
-                        color_rgb(255,127,0), color_rgb(0,255,127), color_rgb(255,0,127),
-                        color_rgb(127,127,0), color_rgb(127,0,127), color_rgb(0,127,127),
-                        color_rgb(255,255,127), color_rgb(255,127,255), color_rgb(127,255,255) ]
-global cur_color
-cur_color = 0
-global black, white, red, green, blue
-black = color_rgb(0,0,0)
-white = color_rgb(255,255,255)
-red = color_rgb(200,0,0)
-green = color_rgb(0,200,0)
-blue = color_rgb(0,0,200)
-grey = color_rgb(100,100,100)
-light_grey = color_rgb(200,200,200)
-global nrows
-nrows = 1
-
-def make( rows, cols, width, height ) :
-    """Create the grid display, initially all white.
-    rows, cols are the grid size in rows and columns.
-    width, height are the window size in pixels.
-    
-    Args: 
-        rows:  number of rows of cells in the grid (vertical divisions)
-        cols:  number of columns of cells in the grid (horizontal divisions)
-        width:  horizontal width of window in pixels
-        height: vertical height of window in pixels
-    Returns:  nothing
+    Attributes:
+        square: square root of the number the user defined, used in creation of grid
+        cols: number of columns in grid
+        rows: number of rows in grid
+        nrows: number of rows in grid
+        height: height in px of graphics window
+        width: width in px of graphics window
+        win: instance of graphics object
+        color_wheel: list of hex color values
+        cur_color: index of current color in color_wheel
     """
-    global win, cell_width, cell_height, nrows
-    win = GraphWin("Grid", width, height )
-    win.setCoords(0, 0, rows, cols)
-    bkgrnd = Rectangle( Point(0,0), Point(width,height) )
-    bkgrnd.setFill( color_rgb(255,255,255) ) # White background
-    cell_width = width / cols
-    cell_height = height / rows
-    nrows = rows 
 
-def get_cur_color():
-    """Return the currently chosen color in the color wheel.  
-    
-    The color wheel is a list of colors selected to be contrast with each other. 
-    The first few entries are bright primary colors; as we cycle through the color
-    wheel, contrast becomes less, but colors should remain distinct to those with 
-    normal color vision until the color wheel cycles all the way around in 18 
-    choices and starts recycling previously used colors.   The color wheel starts
-    out in position 0, so get_cur_color() may be called before get_next_color() has 
-    been called. 
-    
-    Args:  none
-    Returns:  
-        a 'color' that can be passed to fill_cell
+    def __init__(self, gridSize):
+        """
+        a value is passed in to the constructor and continues if the value is a
+        perfect square
+        a window is created and white background is drawn to the screen
+        a list which holds color values is created
+        calls the draw grid method
+        """
+        if not self.__isSquare(gridSize):
+            print "%f not so much" % gridSize
+            exit()
+        self.square = (int(round(gridSize ** .5)))
+        self.cols = gridSize
+        self.rows = gridSize
+        self.height = 500
+        self.width = 500
+        self.win = GraphWin("Grid", self.width, self.height)
+        self.win.setCoords(0, 0, self.rows, self.cols)
+        self.bkgrnd = Rectangle(Point(0, 0), Point(self.width, self.height))
+        self.bkgrnd.setFill(color_rgb(255,255,255))
+        self.nrows = gridSize
+        self.color_wheel = []
+        self.cur_color = None
+
+        self.__make_color_wheel()
+        self.cur_color = self.__get_next_color()
+
+        self.__draw_grid()
+
+    def __make_color_wheel(self):
+        """ populates color_wheel list
+
+        opens colors.json and appends the hexadecimal color values to self.color_wheel
         
-    FIXME: The color wheel should produce colors of contrasting brightness
-    as well as hue, to maximize distinctness for dichromats (people with 
-    "color blindness".  Maybe generating a good color wheel can be part of a 
-    project later in CIS 210.   (This is not a required or expected change 
-    for the week 4 project.) 
-    """
-    return color_wheel[cur_color]
+        Args:
+            none
+        Returns:
+            none
+        """
+        with open("colors.json") as file:
+            colors = file.read()
+        colors = json.loads(colors)
 
-def get_next_color():
-    """Advance the color wheel, returning the next available color. 
-    
-    The color wheel is a list of colors selected to be contrast with each other. 
-    The first few entries are bright primary colors; as we cycle through the color
-    wheel, contrast becomes less, but colors should remain distinct to those with 
-    normal color vision until the color wheel cycles all the way around in 18 
-    choices and starts recycling previously used colors. 
-    
-    Args:  none
-    Returns:  
-        a 'color' that can be passed to fill_cell    
-    """
-    global cur_color
-    cur_color += 1
-    if cur_color >= len(color_wheel) :
-        cur_color = 0
-    return color_wheel[cur_color]
+        for color in colors:
+            self.color_wheel.append(color["html"])
 
-def fill_cell(row, col, color):
-    """Fill cell[row,col] with color.
-    
-    Args: 
-        row:  which row the selected cell is in.  Row 0 is the top row, 
-           row 1 is the next row down, etc.  Row should be between 0 
-           and one less than the number of rows in the grid. 
-        col:  which column the selected cell is in.  Column 0 is 
-           the leftmost row, column 1 is the next row to the right, etc. 
-           Col should be between 0 and one less than the number of columns
-           in the grid. 
-        color: What color to fill fill the selecte cell with.  Valid colors
-           include grid.white, grid.black, and values returned by 
-           grid.get_next_color() and grid.get_cur_color()
+    def __get_cur_color(self):
+        """ returns hex color value using the int self.cur_color as in index
+        in self.color_wheel
+        """
+        return self.color_wheel[self.cur_color]
 
-    """
-    global nrows, win
-    left = col
-    right = col + 1
-    top = nrows - (row + 1)
-    bottom = nrows - row
-    mark = Rectangle( Point(left,bottom), Point(right,top) )
-    mark.setFill(color)
-    mark.draw(win)
-    
-def label_cell(row, col, text, color=black):
-    """Place text label on cell[row,col].
-    
-    Args: 
-        row:  which row the selected cell is in.  Row 0 is the top row, 
-           row 1 is the next row down, etc.  Row should be between 0 
-           and one less than the number of rows in the grid. 
-        col:  which column the selected cell is in.  Column 0 is 
-           the leftmost row, column 1 is the next row to the right, etc. 
-           Col should be between 0 and one less than the number of columns
-           in the grid. 
-        text: string (usually one character) to label the cell with
-        color: Color of text label
-    """
-    global nrows, win
-    xcenter = col + 0.5
-    ycenter = nrows - (row + 1) + 0.5
-    label = Text( Point(xcenter, ycenter), text)
-    label.setFace("helvetica")
-    label.setSize(20)  ## Is there a better way to choose text size? 
-    label.setFill(color)
-    label.draw(win)
+    def __get_next_color(self):
+        """ updates cur_color with a random value
 
-def sub_grid_dim(rows, cols):
-    """Divide each cell into rows x cols for sub-labeling
-    (like "pencil marks" in Sudoku).
-    Args:
-       rows:  The number of rows of sub-cell in a cell.
-       cols:  The number of columns of sub-cell in a cell.
-    Returns: nothing
-    Effects: Affects behavior of sub_label_cell
-    """
-    global n_sub_rows, n_sub_cols
-    n_sub_rows = rows
-    n_sub_cols = cols
+        if self.cur_color has a value, pop it from the list self.color_wheel
+        if self.color_wheel has no values, populate the list again
+        assign self.cur_color to a random integer which will be used as the index
+        in self.color_wheel
 
-def sub_label_cell(row, col, sub_row, sub_col, text, color=black):
-      """Place label in subrow, subcol of row, col.
-      Args:
-        row:  Row of major grid (counting 0 as top row)
-        col:  Column of major grid (counting 0 as leftmost column)
-        sub_row:  Row in minor (interior) grid of cell
-        sub_col:  Column in minor (interior) grid of cell
-        text: Label (usually one character) to place there
-        color: color of text
-      """
-      global nrows, n_sub_rows, n_sub_cols, win
-      xcenter = col + ((sub_col + 0.5) / n_sub_cols)
-      ycenter = nrows - (row + 1) + ((sub_row + 0.5) / n_sub_rows)
-      # print("Placing subgrid label at ({},{})".format(xcenter,ycenter))
-      label = Text( Point(xcenter, ycenter), text)
-      label.setFace("helvetica")
-      label.setSize(10)  ## Is there a better way to choose text size? 
-      label.setFill(color)
-      label.draw(win)
-    
+        Args:
+            none
+        Returns:
+            cur_color
+        """
+        if self.cur_color:
+            self.color_wheel.pop(self.cur_color)
+        if not len(self.color_wheel):
+            self.__make_color_wheel()
+        self.cur_color = random.randint(0,len(self.color_wheel) - 1)
+        return self.cur_color
 
-def close():
-    """ Close the graphics window (shut down graphics). 
-    
-    Args: none
-    Returns: nothing
-    Effect:  the grid graphics window is closed. 
-    """
-    global win
-    win.close()
-    
+    def __draw_grid(self):
+        """ draws the grid to the screen
+        
+        the grid is populated with large cells and subgrids in each cell
+        that have the same number of columns and rows (3 x 3 grid has a smaller 3 x 3 grid in each cell)
+        each cell in the large grid has a different color chosen randomly from the color wheel list
+        
+        Args:
+            none
+        Returns:
+            none
+        """
+        for row in range(self.square):
+            for col in range(self.square):
+                for sub_row in range(row * self.square, row * self.square + self.square):
+                    for sub_col in range(col * self.square, col * self.square + self.square):
+                        self.__fill_cell(sub_row, sub_col, self.__get_cur_color())
+                self.cur_color = self.__get_next_color()
+
+    def __fill_cell(self, row, col, color):
+        """ fill cell[row,col] with color.
+        
+        Args: 
+            row:  which row the selected cell is in.  Row 0 is the top row, 
+            row 1 is the next row down, etc.  Row should be between 0 
+            and one less than the number of rows in the grid. 
+            col:  which column the selected cell is in.  Column 0 is 
+            the leftmost row, column 1 is the next row to the right, etc. 
+            Col should be between 0 and one less than the number of columns
+            in the grid. 
+        """
+        left = col
+        right = col + 1
+        top = self.nrows - (row + 1)
+        bottom = self.nrows - row
+        mark = Rectangle(Point(left,bottom), Point(right,top))
+        mark.setFill(color)
+        mark.draw(self.win)
+
+    def close(self):
+        """ closes the graphics window and exits the program
+        
+        Args:
+            none
+        Returns:
+            none
+        """
+        self.win.close()
+        exit()
+
+    def __isSquare(self, num):
+        """ determines if a number is a perfect square
+        (I haven't found the threshold, but does not work for very large numbers)
+
+        rounds the square root of a number to the nearest whole number
+        casts the result to type int
+        squares that result and compares it to the original number
+
+        Args:
+            num: number that needs to be determined to having perfect square
+        Returns:
+            False: if num is not perfect square
+            num: if num is perfect square. num instead of true because of case 0,
+                which passes this test but doesn't need to be drawn to screen
+        """
+        if int(round(num ** .5)) ** 2 == num:
+            return num
+        else:
+            return False
+
 if __name__ == "__main__":
-    print("Testing grid: 3x3 with 3x3 subgrid")
-    make(3,3,500,500)
-    sub_grid_dim(3,3)
-    for row in range(3):
-        for col in range(3):
-            fill_cell(row, col, white)
-    label_cell(0,0,"00")
-    label_cell(1,1,"11")
-    label_cell(2,2,"22")
-    for i in range(3):
-        for j in range(3):
-             sub_label_cell(0, 2, i, j, str(i)+str(j))
-             
-
-    input("Press enter to exit")
-    close()
-    
-   
+    if len(sys.argv) == 2:
+        option = float(sys.argv[1])
+    else:
+        option = input("Enter a Number: ")
+    square = Grid(option)
+    raw_input("Press enter to continue")
+    square.close()
