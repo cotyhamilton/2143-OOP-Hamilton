@@ -10,6 +10,6 @@ The sum of the change in x and change in y
 
 ie: |x<sub>2</sub> - x<sub>1</sub>| + |y<sub>2</sub> - y<sub>1</sub>|
 
-<img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Manhattan_distance.svg" />
+<img src="./distance.gif" />
 
 blue, red, and yellow paths show equivalent manhatten distance vs green Euclidean distance (as the crow flies)
