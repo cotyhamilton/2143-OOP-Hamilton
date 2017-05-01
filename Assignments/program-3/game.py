@@ -17,6 +17,7 @@ class Dice(object):
 ##############################################################################
 
 class PigDice(object):
+
     """
     @Class: PigDice
     @Description: 
@@ -58,88 +59,135 @@ class LeaderBoard(object):
     """
     __shared_state = {}
 
-    def __init__(self,player=None):
+    def __init__(self, player=None, target = 100):
+        
         self.__dict__ = self.__shared_state
 
         if len(self.__shared_state.keys()) == 0:
-          self.players = {}
-          
+            self.players = {}
+        
         if not player is None:
             self.players[player.name] = player
-          
+
+        if player is None:
+            self.target_score = target
+        
     def __str__(self):
-      s = ''
-      for name,p in self.players.items():
-        s += p.__str__()
-        s += ',\n'
-      
-      return s
-      
+        s = ''
+        for name,p in self.players.items():
+            s += p.__str__()
+            s += ',\n'
+        
+        return s
+    
     def Find(self,name,key):
-      """
-      @Method: Find
-      @Description: 
-          Retreive a key value from player.
-          e.g. score = leaderboard.Find('Bob','Score)
-               total_rolls = leaderbard.Find('Sue','tot_rolls')
-      @Returns: Mixed (whatever type the value is from the player)
-      """ 
-      if not name in self.players:
+        """
+        @Method: Find
+        @Description: 
+            Retreive a key value from player.
+            e.g. score = leaderboard.Find('Bob','Score)
+                total_rolls = leaderboard.Find('Sue','tot_rolls')
+        @Returns: Mixed (whatever type the value is from the player)
+        """ 
+        if not name in self.players:
+            return None
+        else:
+            return self.players[name][key]
+        
         return None
-      else:
-          return self.players[name][key]
-      
-      return None
-      
+        
     def print_leaderBoard(self):
-      pass
+        pass
 
 ##############################################################################
     
 class Player(object):
-  """
-  @Class: Player
-  @Description: 
-      Represents a single player for our pig game
-  @Methods:
-      
-  """
-  def __init__(self,name=None):
-    self.name = name                        # Players name
-    self.score = 0                          # Players score
-    self.avg_rolls_per_round = 0            # average rolls per round
-    self.avg_score_per_round = 0            # average score per round
-    self.tot_rolls = 0                      # total rolls
-    self.round_score = 0                    # single (last) round score
-    self.round_rolls = 0                    # single (last) round rolls
-    self.strategy = None                    # strategy name if any
-    self.leaderBoard = LeaderBoard(self)    # global instance of all players
-    self.dice = PigDice()                   # instance of dice class
-    
-  def Roll(self):
-    self.RandomRoll()
-          
-  def RandomRoll(self):
-    self.round_score = 0
-    self.round_rolls = 0
-    for i in range(random.randint(1,6)):
-        self.round_rolls += 1
+    """
+    @Class: Player
+    @Description: 
+        Represents a single player for our pig game
+    @Methods:
+        
+    """
+    def __init__(self, name=None, strategy = "Normal"):
+        self.name = name                        # Players name
+        self.score = 0                          # Players score
+        self.avg_rolls_per_round = 0            # average rolls per round
+        self.avg_score_per_round = 0            # average score per round
+        self.tot_rolls = 0                      # total rolls
+        self.round_score = 0                    # single (last) round score
+        self.round_rolls = 0                    # single (last) round rolls
+        self.strategy = strategy                # strategy name if any
+        self.target_rolls = 6
+        self.target_score = 20
+        self.leaderBoard = LeaderBoard(self)    # global instance of all players
+        self.dice = PigDice()                   # instance of dice class
+        self.wins = 0
+
+        if self.strategy is "aggressive":
+            self.target_score = 30
+            self.target_rolls = 9
+        elif self.strategy is "cautious":
+            self.target_score = 10
+            self.target_rolls = 3
+        
+    def PlayRound(self):
+        self.round_score = 0
+        self.round_rolls = 0
+        self.Strategy()
+        self.score += self.round_score
+        self.tot_rolls += self.round_rolls
+
+    def Roll(self):
         roll = self.dice.Roll()
-        if roll == 0:
-            break
         self.round_score += roll
-    self.score += self.round_score
-    self.tot_rolls += self.round_rolls
+        self.round_rolls += 1
+        return roll
+          
+    def RandomRoll(self):
+        for i in range(random.randint(1,7)):
+            self.round_rolls += 1
+            roll = self.dice.Roll()
+            if roll == 0:
+                break
+            self.round_score += roll
+
+    def Strategy(self):
+        if self.score / self.leaderBoard.target_score >= .8:
+            self.SprintToFinish()
+        elif self.strategy == 'Random':
+            self.RandomRoll()
+        else:
+            roll = self.Roll()
+            while (self.round_rolls <= self.target_rolls and self.round_score <= self.target_score):
+                if not self.Good(roll):
+                    break
+                roll = self.Roll()
+        
+    def SprintToFinish(self):
+        while True:
+            roll = self.Roll()
+            if not self.Good(roll):
+                break
     
+    def Good(self,roll):
+        return roll is not 0 and self.score + self.round_score < self.leaderBoard.target_score
+
+    def NewGame(self):
+        self.round_score = 0
+        self.round_rolls = 0
+        self.score = 0
+        self.tot_rolls = 0
+
     
-  def __str__(self):
-    return "[Name:%s, Score:%d, Arpr:%s Aspr:%s, Tr:%s, Rs:%s, Rr:%s, Strat:%s]" % (self.name,self.score,self.avg_score_per_round,self.avg_rolls_per_round,self.tot_rolls,self.round_score,self.round_rolls,self.strategy)
-    
-  def __getitem__(self, key):
-      if hasattr(self, key):
-          return getattr(self, key)
-      else:
-          return None
+    def __str__(self):
+        return "[Name:%s, Score:%d, Arpr:%s Aspr:%s, Tr:%s, Rs:%s, Rr:%s, Strat:%s]" % (self.name,self.score,self.avg_score_per_round,self.avg_rolls_per_round,self.tot_rolls,self.round_score,self.round_rolls,self.strategy)
+        
+    def __getitem__(self, key):
+        if hasattr(self, key):
+            return getattr(self, key)
+        else:
+            return None
     
 ##############################################################################
 
@@ -160,9 +208,11 @@ class PigGame(object):
     def __init__(self, **kwargs):
         self.Players = []                           # player dictionary
         self.NumDice = kwargs['num_dice']           # number of dice per roll
-        self.RandomRolls = kwargs['random_roles']   # max num random rolls
+        self.RandomRolls = kwargs['random_rolls']   # max num random rolls
         self.TargetScore = kwargs['target_score']   # game winning score
         self.WinnerName = None                      # no winner yet
+        self.GameRounds = 0
+        LeaderBoard(None, self.TargetScore)
         
         # initialize all players
         self.AddPlayers(kwargs['players'])
@@ -181,9 +231,9 @@ class PigGame(object):
         @Method: AddPlayers
         @Description: Adds a new player or players to the game
             Example: {
-                       'bob':<player_object>
-                       'sue':<player_object>
-                     }
+                    'bob':<player_object>
+                    'sue':<player_object>
+                    }
 
         @Params: [] - players
         @Returns: None
@@ -194,22 +244,24 @@ class PigGame(object):
             for p in players:
                 self.Players.append(p)
                     
-     
+    
     def RunGame(self):
         """
-        @Method: WinnerExists
-        @Description: Checks to see if a player has acheived the target score.
-        @Params:None
-        @Returns: bool
+        @Method: RunGame
+        @Description: Starts game loop, ends when a player wins
+        @Params: None
+        @Returns: None
         """    
         
         # Main game loop
-        print(self)
+        random.shuffle(self.Players)
+        self.GameRounds = 0
         while not self.WinnerExists():
             for PlayerObj in self.Players:
-                PlayerObj.Roll()
+                PlayerObj.PlayRound()
             print(self)
- 
+            self.GameRounds += 1
+        self.WinnerName = self.Winner()
 
     def WinnerExists(self):
         """
@@ -219,9 +271,13 @@ class PigGame(object):
         @Returns: bool
         """
         for p in self.Players:
-          if p.score >= self.TargetScore:
-            return True
+            if p.score >= self.TargetScore:
+                return True
         return False
+
+    def NewGame(self):
+        for p in self.Players:
+            p.NewGame()
 
 
     def Winner(self):
@@ -230,20 +286,45 @@ class PigGame(object):
         @Description: Returns the winner, if there is one.
         @Params:None
         @Returns: [string,None]: Players name or None
-        """        
-        pass
+        """
+        winner = None
+        for p in self.Players:
+            if p.score >= self.TargetScore:
+                if winner:
+                    if p.score > winner.score:
+                        winner = p
+                else:
+                    winner = p
+        return winner.name
+
+                
     
     
 ##############################################################################
 
-players = [Player('Bob'),Player('Sue'),Player('Dax'),Player('Ann')]
-kwargs = {'num_dice':1,'random_roles':9,'target_score':100,'players':players}
+# (name, strategy)
+
+players = [Player('Bob', 'Cautious'), Player('Sue', 'Normal'), Player('Dax', 'Agressive'), Player('Ann', 'Random')]
+kwargs = {'num_dice':1,'random_rolls':9,'target_score':100,'players':players}
 pg = PigGame(**kwargs)
 
 
       
       
-    
+Winners = {}
+
+runs = 500
+P = PigGame(**kwargs)
+for i in range(runs):
+  P.RunGame()
+  winner = P.Winner()
+  if not winner in Winners:
+    Winners[winner] = []
+  Winners[winner].append(P.GameRounds)
+  P.NewGame()
+
+for winner,wins in Winners.items():
+  print(winner,len(wins),sum(wins)/len(wins))
   
   
   
