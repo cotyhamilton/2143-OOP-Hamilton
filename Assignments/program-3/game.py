@@ -106,7 +106,18 @@ class Player(object):
     @Class: Player
     @Description: 
         Represents a single player for our pig game
+
+
+        Players may have one of four strategies: normal, random, cautious, aggressive
+        Normal stops rolling after 6 rolls or hitting 20 points
+        Cautious stops rolling after 3 rolls or hitting 10 points
+        Agressive stops rolling after 9 rolls or hitting 30 points
+
+        All players sprint to finish when they reach 75% of the Game's target score
+
     @Methods:
+        
+
         
     """
     def __init__(self, name=None, strategy = "Normal"):
@@ -132,6 +143,10 @@ class Player(object):
             self.target_rolls = 3
         
     def PlayRound(self):
+        """
+        @Description: 
+            sets up round, calls the strategy method to roll according to strategy, and adds up totals
+        """ 
         self.round_score = 0
         self.round_rolls = 0
         self.Strategy()
@@ -139,30 +154,48 @@ class Player(object):
         self.tot_rolls += self.round_rolls
 
     def Roll(self):
+        """
+        @Description: 
+            Rolls the dice, sets round score to zero if skunk value hit, and appends round score and round rolls
+        @Returns:
+            roll (value from dice roll, 0 if skunk)
+        """ 
         roll = self.dice.Roll()
-        self.round_score += roll
+        if roll == 0:
+            self.round_score = 0
+        else:
+            self.round_score += roll
         self.round_rolls += 1
         return roll
           
     def RandomRoll(self):
+        """
+        @Description: 
+            Picks a random value between 1 and 7 and rolls that many times
+        """ 
         for i in range(random.randint(1,7)):
-            self.round_rolls += 1
-            roll = self.dice.Roll()
-            if roll == 0:
+            roll = self.Roll()
+            if not self.Good(roll):
                 break
-            self.round_score += roll
 
     def Strategy(self):
-        if self.score / self.leaderBoard.target_score >= .8:
+        """
+        @Description: 
+            Rolls according to player's strategy
+            Calls sprint to finish if player reaches 75% of game's target score
+            Random if Random
+            Normal, Cautious, and Agressive are bound by the player's target rolls and target score
+            
+        """ 
+        if self.score / self.leaderBoard.target_score >= .75:
             self.SprintToFinish()
         elif self.strategy == 'Random':
             self.RandomRoll()
         else:
-            roll = self.Roll()
             while (self.round_rolls <= self.target_rolls and self.round_score <= self.target_score):
+                roll = self.Roll()
                 if not self.Good(roll):
                     break
-                roll = self.Roll()
         
     def SprintToFinish(self):
         while True:
@@ -171,7 +204,11 @@ class Player(object):
                 break
     
     def Good(self,roll):
-        return roll is not 0 and self.score + self.round_score < self.leaderBoard.target_score
+        """
+        @Description: 
+            Returns true if the player should continue rolling, false if player rolls skunk value or wins
+        """ 
+        return roll != 0 and self.round_score < self.leaderBoard.target_score
 
     def NewGame(self):
         self.round_score = 0
@@ -256,11 +293,12 @@ class PigGame(object):
         # Main game loop
         random.shuffle(self.Players)
         self.GameRounds = 0
+        self.NewGame()
         while not self.WinnerExists():
             for PlayerObj in self.Players:
                 PlayerObj.PlayRound()
-            print(self)
             self.GameRounds += 1
+        # print(self)
         self.WinnerName = self.Winner()
 
     def WinnerExists(self):
@@ -295,7 +333,7 @@ class PigGame(object):
                         winner = p
                 else:
                     winner = p
-        return winner.name
+        return winner
 
                 
     
@@ -303,6 +341,9 @@ class PigGame(object):
 ##############################################################################
 
 # (name, strategy)
+
+# strategies are normal, random, cautious, aggressive
+# all players sprint to finish when threshold is met (75%)
 
 players = [Player('Bob', 'Cautious'), Player('Sue', 'Normal'), Player('Dax', 'Agressive'), Player('Ann', 'Random')]
 kwargs = {'num_dice':1,'random_rolls':9,'target_score':100,'players':players}
@@ -313,20 +354,22 @@ pg = PigGame(**kwargs)
       
 Winners = {}
 
-runs = 500
+runs = 1000
 P = PigGame(**kwargs)
 for i in range(runs):
   P.RunGame()
   winner = P.Winner()
-  if not winner in Winners:
-    Winners[winner] = []
-  Winners[winner].append(P.GameRounds)
-  P.NewGame()
+  if not winner.name in Winners:
+    Winners[winner.name] = {}
+    Winners[winner.name]["wins"] = 0
+    Winners[winner.name]["strategy"] = winner.strategy
+  Winners[winner.name]["wins"] += 1
 
-for winner,wins in Winners.items():
-  print(winner,len(wins),sum(wins)/len(wins))
-  
-  
-  
+print()
+print('%-4s%12s%8s' % ("name", "strategy", "%wins"))
+print("_"*24, "\n")
+for winner,k in Winners.items():
+    print ('%-8s%-12s%-12f' % (winner, k["strategy"], k["wins"]/runs))
+print()
   
   
