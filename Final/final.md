@@ -74,7 +74,21 @@ print(tickets([25, 25, 50, 100, 25, 50, 25]))
 
 **`Question 3:`**
 ``` python
+class Point:
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
 
+    def __str__(self):
+        return "[%d,%d]" % (self.x, self.y) 
+
+class Shape(object):
+    def __init(self,p1,p2):
+        self.p1 = p1
+        self.p2 = p2
+    
+    def area(self):
+        pass
 ```
 
 **`Question 4:`**
